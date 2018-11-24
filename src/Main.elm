@@ -12,12 +12,12 @@ import Json.Decode as Decode
 
 
 type alias Model =
-    { newTaskText : String }
+    { newTaskText : String, tasks : List String }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( { newTaskText = "" }, Cmd.none )
+    ( { newTaskText = "", tasks = [] }, Cmd.none )
 
 
 
@@ -32,24 +32,29 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        NewTaskEnterKeyed int ->
-            if int == 13 then
-                ( { model | newTaskText = "" }, Cmd.none )
+        NewTaskEnterKeyed keyPressed ->
+            if keyPressed == 13 then
+                ( { model
+                    | newTaskText = ""
+                    , tasks = model.newTaskText :: model.tasks
+                  }
+                , Cmd.none
+                )
 
             else
                 ( model, Cmd.none )
 
-        NewTaskTextChanged string ->
-            ( { model | newTaskText = string }, Cmd.none )
+        NewTaskTextChanged taskText ->
+            ( { model | newTaskText = taskText }, Cmd.none )
+
+
+drawListOfTasks : Model -> List (Html Msg)
+drawListOfTasks model =
+    model.tasks |> List.map (\task -> div [] [ text task ])
 
 
 
 ---- VIEW ----
-
-
-onKeyDown : (Int -> msg) -> Attribute msg
-onKeyDown tagger =
-    on "keydown" (Decode.map tagger keyCode)
 
 
 view : Model -> Html Msg
@@ -57,7 +62,17 @@ view model =
     div []
         [ h1 [] [ text "Elm ToDo!" ]
         , div []
-            [ input [ placeholder "Enter a task to do!", value model.newTaskText, onInput NewTaskTextChanged, type_ "input", onKeyDown NewTaskEnterKeyed ] [] ]
+            [ input
+                [ placeholder "Enter a task to do!"
+                , value model.newTaskText
+                , onInput NewTaskTextChanged
+                , type_ "input"
+                , on "keydown" (Decode.map NewTaskEnterKeyed keyCode)
+                ]
+                []
+            ]
+        , div []
+            (drawListOfTasks model)
         ]
 
 
