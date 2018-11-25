@@ -2,9 +2,10 @@ module Main exposing (Model, Msg(..), init, main, update, view)
 
 import Browser
 import Html exposing (Attribute, Html, div, h1, img, input, text)
-import Html.Attributes exposing (placeholder, src, type_, value)
-import Html.Events exposing (keyCode, on, onInput)
+import Html.Attributes exposing (checked, placeholder, src, type_, value)
+import Html.Events exposing (keyCode, on, onClick, onInput)
 import Json.Decode as Decode
+import List.Extra exposing (updateAt)
 
 
 
@@ -12,7 +13,13 @@ import Json.Decode as Decode
 
 
 type alias Model =
-    { newTaskText : String, tasks : List String }
+    { newTaskText : String, tasks : List Task }
+
+
+type alias Task =
+    { text : String
+    , isComplete : Bool
+    }
 
 
 init : ( Model, Cmd Msg )
@@ -27,16 +34,22 @@ init =
 type Msg
     = NewTaskEnterKeyed Int
     | NewTaskTextChanged String
+    | TaskCompleteToggled Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
+    let
+        newTask : String -> Task
+        newTask taskText =
+            { text = taskText, isComplete = False }
+    in
     case msg of
         NewTaskEnterKeyed keyPressed ->
             if keyPressed == 13 then
                 ( { model
                     | newTaskText = ""
-                    , tasks = model.newTaskText :: model.tasks
+                    , tasks = newTask model.newTaskText :: model.tasks
                   }
                 , Cmd.none
                 )
@@ -47,10 +60,26 @@ update msg model =
         NewTaskTextChanged taskText ->
             ( { model | newTaskText = taskText }, Cmd.none )
 
+        TaskCompleteToggled index ->
+            let
+                toggleTask : Task -> Task
+                toggleTask task =
+                    { task | isComplete = not task.isComplete }
+            in
+            ( { model | tasks = updateAt index toggleTask model.tasks }, Cmd.none )
+
 
 drawListOfTasks : Model -> List (Html Msg)
 drawListOfTasks model =
-    model.tasks |> List.map (\task -> div [] [ text task ])
+    List.indexedMap drawTask model.tasks
+
+
+drawTask : Int -> Task -> Html Msg
+drawTask index task =
+    div []
+        [ div [] [ input [ type_ "checkbox", checked task.isComplete, onClick (TaskCompleteToggled index) ] [] ]
+        , div [] [ text task.text ]
+        ]
 
 
 
