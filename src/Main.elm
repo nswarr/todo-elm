@@ -2,7 +2,7 @@ module Main exposing (Model, Msg(..), init, main, update, view)
 
 import Browser
 import Html exposing (Attribute, Html, div, h1, img, input, text)
-import Html.Attributes exposing (checked, placeholder, src, type_, value)
+import Html.Attributes exposing (checked, class, placeholder, src, type_, value)
 import Html.Events exposing (keyCode, on, onClick, onInput)
 import Json.Decode as Decode
 import List.Extra exposing (updateAt)
@@ -76,8 +76,15 @@ drawListOfTasks model =
 
 drawTask : Int -> Task -> Html Msg
 drawTask index task =
-    div []
-        [ div [] [ input [ type_ "checkbox", checked task.isComplete, onClick (TaskCompleteToggled index) ] [] ]
+    div [ class "task-item" ]
+        [ div []
+            [ input
+                [ type_ "checkbox"
+                , checked task.isComplete
+                , onClick (TaskCompleteToggled index)
+                ]
+                []
+            ]
         , div [] [ text task.text ]
         ]
 
@@ -96,7 +103,7 @@ view model =
                 , value model.newTaskText
                 , onInput NewTaskTextChanged
                 , type_ "input"
-                , on "keydown" (Decode.map NewTaskEnterKeyed keyCode)
+                , on "keydown" (keyCode |> Decode.map NewTaskEnterKeyed)
                 ]
                 []
             ]
